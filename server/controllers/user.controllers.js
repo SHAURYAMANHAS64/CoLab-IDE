@@ -11,6 +11,7 @@ export const createUser = async (req, res) => {
         const user = await userService.createUser(req.body);
 
         const token = user.generateAuthToken();
+        delete user._doc.password;
         res.status(201).json({ user, token });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -35,6 +36,7 @@ export const loginUser = async (req, res) => {
             return;
         }
         const token = user.generateAuthToken();
+        delete user._doc.password;
         res.status(200).json({ user, token });
     }catch (error) {
         res.status(500).json({ error: error.message });

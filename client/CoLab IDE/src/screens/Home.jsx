@@ -1,14 +1,17 @@
 import React from "react";
 import { useContext } from "react";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { userContext } from "../context/user.context";
 import axios from "../config/axios";
-import { useState } from "react";
+import { useState , useEffect } from "react";
+import {useNavigate} from "react-router-dom";
 
 const Home = () => {
   const { user } = useContext(userContext);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [projects, setProjects] = useState([]); 
+  const navigate = useNavigate();
   function createProject(e){
     e.preventDefault();
     console.log(projectName);
@@ -19,26 +22,47 @@ const Home = () => {
     });
 
   }
-  function handleSubmit(event){
-    event.preventDefault();
-    if (!projectName.trim()) return;
-    createProject(projectName.trim());
-    setProjectName("");
-    setIsModalOpen(false);
-  }
+  useEffect(() => {
+    axios.get("/projects/all").then((res) => {
+      setProjects(res.data.projects);
+    }).catch((err) => {
+      console.error(err);
+    });
+  }, []);
+
+
+
+
+
   return (
     <main
     className="p-4">
-<div className="projects">
-  <div className="project">
-    <button
-      className="add-project-btn flex items-center gap-2 px-4 py-2 rounded-sm bg-black text-white"
-      onClick={() => setIsModalOpen(true)}
-    >
-      <Plus size={20} />
-      Add Project
-    </button>
-  </div>
+<div className="project flex flex-wrap items-center gap-3">
+  <button
+    className="add-project-btn flex items-center gap-2 px-4 py-2 rounded-sm bg-black text-white"
+    onClick={() => setIsModalOpen(true)}
+  >
+    <Plus size={20} />
+    Add Project
+  </button>
+  {projects.map((project) => (
+    <div key={project._id} 
+    onClick={()=>{
+      navigate(`/project`,{
+        state: {
+          project
+        }
+      });
+    }} 
+    className="project-item mt-4 rounded-md border border-gray-300 p-4 cursor-pointer hover:bg-gray-50">
+      <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+      <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+        <User size={16} />
+        <p>collaborators:</p>
+        <span>{project.users.length}</span>
+      </div>
+    </div>
+  ))}
 </div>
 
 {isModalOpen && (

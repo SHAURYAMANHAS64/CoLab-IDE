@@ -4,7 +4,7 @@ import Login from "../screens/login";
 import Register from "../screens/register";
 import Home from "../screens/Home";
 import LandingPage from "../screens/LandingPage";
-
+import Project from "../screens/project";
 const AppRoutes = () => {
   return (
     <Router>
@@ -13,6 +13,7 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/project" element={<Project />} />
         </Routes>
     </Router>
   );

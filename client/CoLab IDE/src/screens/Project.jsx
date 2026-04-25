@@ -1,21 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { UsersRound, Send, UserRoundPlus } from "lucide-react";
+import axios from "../config/axios";
 
 const Project = () => {
   const location = useLocation();
 
   const [isSidePanelOpen, setIsSlidePanelOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
-  console.log(location.state);
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    axios.get("/users/all").then(res =>{
+      setUsers(res.data.users);
+    }).catch(err =>{
+      console.log(err);
+    })
+  },[])
+
+  useEffect(() => {
+    console.log("Selected users:", selectedUsers);
+  }, [selectedUsers]);
+  
 
   return (
     <main className="h-screen w-screen flex">
       
       <section className="left relative flex flex-col h-full min-w-96 bg-slate-300">
+         
         
-        
-        <header className="flex justify-end p-4 w-full bg-slate-100">
+        <header className="flex justify-between items-center p-4 w-full bg-slate-100">
+          <button
+            onClick={() => setIsUserModalOpen(true)}
+            className="flex gap-2 items-center p-2"
+          >
+              <UserRoundPlus size={16} mr-1  />
+              <p className="">Add collaborator</p> 
+            </button>
           <button
           onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)} 
           className="p-2  text-black rounded">
@@ -60,10 +82,7 @@ const Project = () => {
           <header
           className='flex justify-end p-2 px-3 bg-slate-200'>
 
-            <button>
-              <UserRoundPlus size={16} mr-1 />
-              <p>Add collaborator</p>
-            </button>
+           
             <button
             onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)}
             className='p-2'
@@ -90,7 +109,112 @@ const Project = () => {
 
         </div>
 
+        {isUserModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setIsUserModalOpen(false)}
+            />
+            <div className="relative w-full max-w-lg rounded-xl bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
+                <div>
+                  <h2 className="text-lg font-semibold">Select users</h2>
+                  <p className="text-sm text-slate-500">
+                    Click a user tile to toggle selection.
+                  </p>
+                </div>
+                <button
+                  className="rounded-md px-2 py-1 text-sm text-slate-600 hover:bg-slate-100"
+                  onClick={() => setIsUserModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="max-h-[65vh] overflow-y-auto p-4 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {users.map((user) => {
+                    const userId = user.id || user._id;
+                    const displayName =
+                      user.name || user.username || user.email || "Unknown";
+                    const initials = displayName
+                      .trim()
+                      .split(" ")
+                      .filter(Boolean)
+                      .map((part) => part[0])
+                      .join("")
+                      .toUpperCase();
+
+                    const isSelected = selectedUsers.some(
+                      (selected) => (selected.id || selected._id) === userId
+                    );
+
+                    return (
+                      <button
+                        key={userId}
+                        type="button"
+                        onClick={() =>
+                          setSelectedUsers((prev) =>
+                            prev.some(
+                              (selected) =>
+                                (selected.id || selected._id) === userId
+                            )
+                              ? prev.filter(
+                                  (selected) =>
+                                    (selected.id || selected._id) !== userId
+                                )
+                              : [...prev, user]
+                          )
+                        }
+                        className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition hover:bg-slate-50 ${
+                          isSelected
+                            ? "border-slate-900 bg-slate-100"
+                            : "border-slate-200"
+                        }`}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+                          {initials || "?"}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">
+                            {displayName}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">
+                            {user.email || "No email"}
+                          </p>
+                          <p className="mt-1 text-[10px] uppercase text-slate-400">
+                            ID: {userId || "n/a"}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t px-4 py-3 sm:px-6">
+                <p className="text-xs text-slate-500">
+                  Selected IDs:{" "}
+                  {selectedUsers.length
+                    ? selectedUsers
+                        .map((user) => user.id || user._id)
+                        .filter(Boolean)
+                        .join(", ")
+                    : "none"}
+                </p>
+                <button
+                  className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  onClick={() => setIsUserModalOpen(false)}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </section>
+      
     </main>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { UsersRound, Send, UserRoundPlus } from "lucide-react";
+import { UsersRound, Send, UserRoundPlus, UserRound } from "lucide-react";
 import axios from "../config/axios";
+import { initializeSocket } from "../config/socket";
 
 const Project = () => {
   const location = useLocation();
@@ -9,14 +10,47 @@ const Project = () => {
   const [isSidePanelOpen, setIsSlidePanelOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
-
+  const [project, setProject] = useState(location.state.project);
   const [users, setUsers] = useState([]);
-  useEffect(() => {
-    axios.get("/users/all").then(res =>{
-      setUsers(res.data.users);
+
+  function addCollaborators(){
+
+    axios.put("/projects/add-user",{
+      projectId: location.state.project._id,
+      users: selectedUsers.map(user => user.id || user._id)
+    }).then(res =>{
+      console.log(res.data);
+      setIsUserModalOpen(false);
     }).catch(err =>{
       console.log(err);
     })
+  }
+
+  useEffect(() => {
+
+    initializeSocket();
+
+    axios.get(`/projects/get-project/${location.state.project._id}`).then(res =>{
+
+      console.log(res.data.project);
+
+      setProject(res.data.project);
+
+    })
+
+
+    axios.get("/users/all").then(res =>{
+
+      console.log(res.data.users);
+
+      setUsers(res.data.users);
+
+    }).catch(err =>{
+
+      console.log(err);
+
+    })
+
   },[])
 
   useEffect(() => {
@@ -35,7 +69,7 @@ const Project = () => {
             onClick={() => setIsUserModalOpen(true)}
             className="flex gap-2 items-center p-2"
           >
-              <UserRoundPlus size={16} mr-1  />
+              <UserRoundPlus size={16} />
               <p className="">Add collaborator</p> 
             </button>
           <button
@@ -80,9 +114,10 @@ const Project = () => {
 
         <div className={`sidePanel w-full h-full flex flex-col gap-2 bg-slate-50 absolute transition-all ${ isSidePanelOpen ?'translate-x-0':'-translate-x-full'} top-0`}>
           <header
-          className='flex justify-end p-2 px-3 bg-slate-200'>
-
-           
+          className='flex justify-between items-center p-2 px-3 bg-slate-200'>
+            <h1
+            className="font-semibold text-lg"
+            >Collaborators</h1>
             <button
             onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)}
             className='p-2'
@@ -91,22 +126,18 @@ const Project = () => {
             </button>
           </header>
 
-          <div className="users cursor-pointer hover:bg-slate-200 flex flex-col gap-2 p-2">
+          <div className="users flex flex-col gap-2 p-2">
 
-              <div className="user flex gap-2">
-
+                {project.users && project.users.map((user, index) =>{
+                  return (<div key={user._id || user.id || index} className="user cursor-pointer hover:bg-slate-200 rounded transition flex gap-2 p-2 w-full">
                 <div
-                className="aspect-square rounded-full w-fit h-fit flex items-center p-5 text-white bg-slate-600">
-                  <i className="fa-solid fa-user text-white absolute"></i>
+                className="aspect-square rounded-full w-fit h-fit flex items-center p-2 text-white bg-slate-600">
+                  <UserRound/>
                 </div>
-                
-                <h1 className="font-semibold text-lg">username</h1>
-
-              </div>
-
+                <h1 className="font-semibold text-lg">{user.email}</h1>
+              </div>)
+                })}
           </div>
-
-
         </div>
 
         {isUserModalOpen && (
@@ -203,8 +234,8 @@ const Project = () => {
                     : "none"}
                 </p>
                 <button
+                onClick={addCollaborators}
                   className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-                  onClick={() => setIsUserModalOpen(false)}
                 >
                   Done
                 </button>

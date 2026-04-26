@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { UsersRound, Send, UserRoundPlus, UserRound } from "lucide-react";
 import axios from "../config/axios";
-import { initializeSocket } from "../config/socket";
-
+import { initializeSocket , recieveMessage ,sendMessage} from "../config/socket";
+// import { set } from "mongoose";
+import {UserContext} from "../context/user.context";
 const Project = () => {
   const location = useLocation();
+  const { user } = useContext(UserContext);
 
   const [isSidePanelOpen, setIsSlidePanelOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [project, setProject] = useState(location.state.project);
   const [users, setUsers] = useState([]);
+  const [message, setMessage] = useState("");
 
   function addCollaborators(){
 
@@ -26,10 +29,27 @@ const Project = () => {
     })
   }
 
+  const send = ()=>{
+    if (!user || !user._id) {
+      return;
+    }
+    console.log("Sending message:", message);
+    sendMessage("project-message", {
+        message,
+        sender: user._id,
+  })
+  setMessage("");
+  }
   useEffect(() => {
 
-    initializeSocket();
+    initializeSocket(project._id);
 
+    recieveMessage("project-message", data =>{
+      console.log("Received message:", data);
+    })
+
+
+    
     axios.get(`/projects/get-project/${location.state.project._id}`).then(res =>{
 
       console.log(res.data.project);
@@ -104,9 +124,13 @@ const Project = () => {
               className="flex-grow p-2 px-4 border rounded outline-none"
               type="text"
               placeholder="Enter message"
+              value={message}
+              onChange={e => setMessage(e.target.value)}
             />
-            <button className="ml-2 px-4 bg-black text-white rounded">
-              <Send size={16} />
+            <button 
+            onClick={send}
+            className="ml-2 px-4 bg-black text-white rounded">
+              <Send />
             </button>
           </div>
 

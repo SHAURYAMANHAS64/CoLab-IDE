@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { UsersRound, Send, UserRoundPlus, UserRound } from "lucide-react";
 import axios from "../config/axios";
-import { initializeSocket , recieveMessage ,sendMessage} from "../config/socket";
-// import { set } from "mongoose";
+import { initializeSocket , recieveMessage ,sendMessage, removeMessageListener} from "../config/socket";
 import {UserContext} from "../context/user.context";
 const Project = () => {
   const location = useLocation();
@@ -15,6 +14,7 @@ const Project = () => {
   const [project, setProject] = useState(location.state.project);
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
+  const messageBoxRef = useRef(null);
 
   function addCollaborators(){
 
@@ -29,7 +29,40 @@ const Project = () => {
     })
   }
 
+  const appendIncomingMessage = (messageObject) => {
+    if (messageBoxRef.current) {
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("message", "max-w-56", "flex", "flex-col", "p-2", "bg-slate-50", "w-fit", "rounded-md");
+      messageDiv.innerHTML = `
+        <small class='opacity-65 text-xsl'>${messageObject.senderEmail || "Unknown"}</small>
+        <p class='text-sm'>${messageObject.message}</p>
+      `;
+      messageBoxRef.current.appendChild(messageDiv);
+      scrollToBottom();
+    }
+  };
+
+  const appendOutgoingMessage = (messageObject) => {
+    if (messageBoxRef.current) {
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("message", "max-w-56", "flex", "flex-col", "p-2", "bg-slate-50", "w-fit", "rounded-md", "ml-auto");
+      messageDiv.innerHTML = `
+        <small class='opacity-65 text-xsl'>${messageObject.senderEmail || "You"}</small>
+        <p class='text-sm'>${messageObject.message}</p>
+      `;
+      messageBoxRef.current.appendChild(messageDiv);
+      scrollToBottom();
+    }
+  };
+
+  function scrollToBottom() {
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  }
+
   const send = ()=>{
+
     if (!user || !user._id) {
       return;
     }
@@ -37,7 +70,14 @@ const Project = () => {
     sendMessage("project-message", {
         message,
         sender: user._id,
+        senderEmail: user.email,
   })
+
+    appendOutgoingMessage({
+      message,
+      senderEmail: user.email
+    })
+
   setMessage("");
   }
   useEffect(() => {
@@ -46,31 +86,27 @@ const Project = () => {
 
     recieveMessage("project-message", data =>{
       console.log("Received message:", data);
+      appendIncomingMessage(data);
     })
 
+    return () => {
+      removeMessageListener("project-message");
+    }
 
-    
+  },[project._id])
+
+  useEffect(() => {
     axios.get(`/projects/get-project/${location.state.project._id}`).then(res =>{
-
       console.log(res.data.project);
-
       setProject(res.data.project);
-
     })
-
 
     axios.get("/users/all").then(res =>{
-
       console.log(res.data.users);
-
       setUsers(res.data.users);
-
     }).catch(err =>{
-
       console.log(err);
-
     })
-
   },[])
 
   useEffect(() => {
@@ -81,10 +117,10 @@ const Project = () => {
   return (
     <main className="h-screen w-screen flex">
       
-      <section className="left relative flex flex-col h-full min-w-96 bg-slate-300">
+      <section className="left relative flex flex-col h-screen min-w-96 bg-slate-300">
          
         
-        <header className="flex justify-between items-center p-4 w-full bg-slate-100">
+        <header className="flex justify-between items-center p-4 w-full bg-slate-100 absolute top-0">
           <button
             onClick={() => setIsUserModalOpen(true)}
             className="flex gap-2 items-center p-2"
@@ -100,24 +136,12 @@ const Project = () => {
         </header>
 
         
-        <div className="conversation-area flex flex-col flex-grow">
+        <div className="conversation-area flex flex-col flex-grow w-full pt-20 h-full">
           
-          
-          <div className="message-box p-2 flex-grow flex flex-col gap-1">
-            <div className="message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md">
-              <small 
-              className='opacity-65 text-xsl'
-              >example@gmail.com</small>
-              <p className='text-sm'>hello </p>
-            </div>
-            <div className="ml-auto max-w-56 message flex flex-col p-2 bg-slate-50 w-fit rounded-md">
-              <small 
-              className='opacity-65 text-xsl'
-              >example@gmail.com</small>
-              <p className='text-sm'>how are you</p>
-            </div>
+          <div className="flex flex-col flex-grow w-full min-h-0">
+          <div ref={messageBoxRef} className="message-box p-2 flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide">
           </div>
-
+          </div>
          
           <div className="inputField w-full flex p-2 bg-slate-100">
             <input

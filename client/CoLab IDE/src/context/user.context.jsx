@@ -4,7 +4,14 @@ export const userContext = createContext();
 export const UserContext = userContext;
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      return null;
+    }
+  });
 
   return (
     <userContext.Provider value={{ user, setUser }}>

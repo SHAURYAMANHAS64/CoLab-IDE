@@ -4,6 +4,7 @@ import { UsersRound, Send, UserRoundPlus, UserRound } from "lucide-react";
 import axios from "../config/axios";
 import { initializeSocket , recieveMessage ,sendMessage, removeMessageListener} from "../config/socket";
 import {UserContext} from "../context/user.context";
+import Markdown from "markdown-to-jsx";
 const Project = () => {
   const location = useLocation();
   const { user } = useContext(UserContext);
@@ -14,6 +15,7 @@ const Project = () => {
   const [project, setProject] = useState(location.state.project);
   const [users, setUsers] = useState([]);
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
   const messageBoxRef = useRef(null);
 
   function addCollaborators(){
@@ -29,37 +31,17 @@ const Project = () => {
     })
   }
 
-  const appendIncomingMessage = (messageObject) => {
-    if (messageBoxRef.current) {
-      const messageDiv = document.createElement("div");
-      messageDiv.classList.add("message", "max-w-56", "flex", "flex-col", "p-2", "bg-slate-50", "w-fit", "rounded-md");
-      messageDiv.innerHTML = `
-        <small class='opacity-65 text-xsl'>${messageObject.senderEmail || "Unknown"}</small>
-        <p class='text-sm'>${messageObject.message}</p>
-      `;
-      messageBoxRef.current.appendChild(messageDiv);
-      scrollToBottom();
-    }
-  };
+  const getSenderLabel = (messageObject) =>
+    messageObject.senderEmail ||
+    messageObject.sender?.email ||
+    messageObject.sender?.name ||
+    "Unknown";
 
-  const appendOutgoingMessage = (messageObject) => {
-    if (messageBoxRef.current) {
-      const messageDiv = document.createElement("div");
-      messageDiv.classList.add("message", "max-w-56", "flex", "flex-col", "p-2", "bg-slate-50", "w-fit", "rounded-md", "ml-auto");
-      messageDiv.innerHTML = `
-        <small class='opacity-65 text-xsl'>${messageObject.senderEmail || "You"}</small>
-        <p class='text-sm'>${messageObject.message}</p>
-      `;
-      messageBoxRef.current.appendChild(messageDiv);
-      scrollToBottom();
-    }
-  };
-
-  function scrollToBottom() {
+  useEffect(() => {
     if (messageBoxRef.current) {
       messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
     }
-  }
+  }, [messages]);
 
   const send = ()=>{
 
@@ -68,15 +50,19 @@ const Project = () => {
     }
     console.log("Sending message:", message);
     sendMessage("project-message", {
+      message,
+      sender: user._id,
+      senderEmail: user.email,
+    });
+
+    setMessages((prev) => [
+      ...prev,
+      {
         message,
         sender: user._id,
         senderEmail: user.email,
-  })
-
-    appendOutgoingMessage({
-      message,
-      senderEmail: user.email
-    })
+      },
+    ]);
 
   setMessage("");
   }
@@ -86,7 +72,7 @@ const Project = () => {
 
     recieveMessage("project-message", data =>{
       console.log("Received message:", data);
-      appendIncomingMessage(data);
+      setMessages((prev) => [...prev, data]);
     })
 
     return () => {
@@ -140,6 +126,29 @@ const Project = () => {
           
           <div className="flex flex-col flex-grow w-full min-h-0">
           <div ref={messageBoxRef} className="message-box p-2 flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide">
+            {messages.map((messageObject, index) => {
+              const senderLabel = getSenderLabel(messageObject);
+              const isAi = messageObject.sender?._id === "ai";
+              const isOwn = messageObject.sender === user?._id;
+
+              return (
+                <div
+                  key={`${messageObject.sender || "msg"}-${index}`}
+                  className={`message max-w-96 flex flex-col p-2 bg-slate-50 w-fit rounded-md ${
+                    isOwn ? "ml-auto" : ""
+                  }`}gre
+                >
+                  <small className="opacity-65 text-xsl">{senderLabel}</small>
+                  {isAi ? (
+                    <div className="text-sm overflow-auto bg-slate-900 text-white  p-2 rounded">
+                      <Markdown>{messageObject.message}</Markdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm">{messageObject.message}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
           </div>
          

@@ -1,77 +1,143 @@
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = process.env.NVIDIA_API_KEY;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 🔥 toggle
+const model = genAI.getGenerativeModel({
+  model: "gemini-3-flash-preview",
+  generationConfig: {
+    responseMimeType:"application/json",
+  }, 
+  systemInstruction: `
+You are an expert in MERN and Development with 10+ years of experience.
+
+- Write modular, scalable, and maintainable code
+- Follow best practices
+- Add clear and understandable comments
+- Handle edge cases properly
+- Ensure error handling and robustness
+- Maintain compatibility with existing code
+
+Example:
+<example>
+user: Create an express application
+response:{
+"text": "this is your fileTree structure of the express server"
+"fileTree": {
+"app.js":{
+content:"
+const express = require('express');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+    res.send('Express server is running');
+});
+
+app.listen(port, () => {
+    console.log("Server listening on port 3000");
+});
+"
+}
+"package.json":{
+content:"
+{
+  {
+    "name": "server",
+    "version": "1.0.0",
+    "description": "",
+    "license": "ISC",
+    "author": "",
+    "type": "commonjs",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+      "express": "^5.2.1"
+    }
+  }
+
+}
+",
+
+
+
+},
+"buildCommand" :{
+mainItem:"npm",
+commands:["install"]
+},
+"startCommand" :{
+mainItem:"node",
+commands:["app.js"]
+}
+}
+}
+</example>
+
+<example>
+user: hello
+response:{
+"text": "Hello! How can I assist you today?"
+
+}
+</example>
+
+`,
+});
+
+// Dev mode toggle
 const DEV_MODE = false;
 
-// cache
+// Cache for repeated prompts
 const cache = new Map();
 
-// cooldown
+// Cooldown control
 let lastCallTime = 0;
 const COOLDOWN = 5000;
 
 export const generateResponse = async (prompt) => {
   try {
-    // ✅ DEV MODE
+    // Dev mock
     if (DEV_MODE) {
       return `🤖 Mock response: ${prompt}`;
     }
 
-    // ✅ cooldown
+    // Cooldown check
     if (Date.now() - lastCallTime < COOLDOWN) {
       return "⏳ Please wait before calling AI again";
     }
     lastCallTime = Date.now();
 
-    // ✅ clean prompt
+    // Clean prompt
     const cleanPrompt = prompt.trim().slice(0, 300);
-
     if (!cleanPrompt) {
       return "⚠️ Empty prompt";
     }
 
-    // ✅ cache
+    // Cache check
     if (cache.has(cleanPrompt)) {
       return cache.get(cleanPrompt);
     }
 
-    // ✅ NVIDIA API call
-    const response = await axios.post(
-      "https://integrate.api.nvidia.com/v1/chat/completions",
-      {
-        model: "google/gemma-3n-e4b-it",
-        messages: [
-          {
-            role: "user",
-            content: `You are a senior MERN developer. Give short, clear answers with code.\n\n${cleanPrompt}`,
-          },
-        ],
-        max_tokens: 150,
-        temperature: 0.2,
-        top_p: 0.7,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // Generate response
+    const result = await model.generateContent(cleanPrompt);
 
-    const text =
-      response.data?.choices?.[0]?.message?.content || "⚠️ No response";
+    const text = result.response.text() || "⚠️ No response";
 
-    // ✅ cache store
+    // Store in cache
     cache.set(cleanPrompt, text);
 
     return text;
-  } catch (error) {
-    console.error("NVIDIA Error:", error.message);
 
-    if (error.response?.status === 429) {
-      return "⚠️ Rate limit hit. Try later.";
+  } catch (error) {
+    console.error("Gemini Error:", error.message);
+
+    if (error?.status === 429) {
+      return "⚠️ AI quota exceeded. Try later.";
     }
 
     return "⚠️ AI temporarily unavailable";

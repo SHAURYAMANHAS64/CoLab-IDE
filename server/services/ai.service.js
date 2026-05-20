@@ -20,62 +20,73 @@ You are an expert in MERN and Development with 10+ years of experience.
 Example:
 <example>
 user: Create an express application
-response:{
-"text": "this is your fileTree structure of the express server"
-"fileTree": {
-"app.js":{
-content:"
-const express = require('express');
+  response: {
 
-const app = express();
-const port = process.env.PORT || 3000;
+    "text": "this is you fileTree structure of the express server",
+    "fileTree": {
+        "app.js": {
+            file: {
+                contents: "
+                const express = require('express');
 
-app.use(express.json());
+                const app = express();
 
-app.get('/', (req, res) => {
-    res.send('Express server is running');
-});
 
-app.listen(port, () => {
-    console.log("Server listening on port 3000");
-});
-"
-}
-"package.json":{
-content:"
-{
-  {
-    "name": "server",
-    "version": "1.0.0",
-    "description": "",
-    "license": "ISC",
-    "author": "",
-    "type": "commonjs",
-    "main": "index.js",
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+                app.get('/', (req, res) => {
+                    res.send('Hello World!');
+                });
+
+
+                app.listen(3000, () => {
+                    console.log('Server is running on port 3000');
+                })
+                "
+            
+        },
     },
-    "dependencies": {
-      "express": "^5.2.1"
+
+        "package.json": {
+            file: {
+                contents: "
+
+                {
+                    "name": "temp-server",
+                    "version": "1.0.0",
+                    "main": "index.js",
+                    "scripts": {
+                        "test": "echo \"Error: no test specified\" && exit 1"
+                    },
+                    "keywords": [],
+                    "author": "",
+                    "license": "ISC",
+                    "description": "",
+                    "dependencies": {
+                        "express": "^4.21.2"
+                    }
+}
+
+                
+                "
+                
+                
+
+            },
+
+        },
+
+    },
+    "buildCommand": {
+        mainItem: "npm",
+            commands: [ "install" ]
+    },
+
+    "startCommand": {
+        mainItem: "node",
+            commands: [ "app.js" ]
     }
-  }
-
 }
-",
 
 
-
-},
-"buildCommand" :{
-mainItem:"npm",
-commands:["install"]
-},
-"startCommand" :{
-mainItem:"node",
-commands:["app.js"]
-}
-}
-}
 </example>
 
 <example>
@@ -85,7 +96,7 @@ response:{
 
 }
 </example>
-
+IMPORTANT : don't use file name like routes/index.js
 `,
 });
 

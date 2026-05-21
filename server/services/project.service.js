@@ -132,11 +132,17 @@ export const updateProjectFileTree = async ({projectId, fileTree}) => {
         throw new Error('File tree is required');
     }    
 
-    const updatedProject = await ProjectModel.findOneAndUpdate({
-        _id: projectId
-    }, {
-    }, {
-        new: true
-    })
-    return project;
-    }
+    const updatedProject = await ProjectModel.findOneAndUpdate(
+        {
+            _id: projectId,
+        },
+        {
+            fileTree,
+        },
+        {
+            new: true,
+        },
+    );
+
+    return updatedProject;
+}

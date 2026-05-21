@@ -107,7 +107,7 @@ export const updateFileTree = async (req, res) => {
         })
 
         return res.status(200).json({
-            project
+            project: updatedProject
         })
     }catch(err){
         console.log(err);

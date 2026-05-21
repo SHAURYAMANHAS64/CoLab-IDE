@@ -194,6 +194,7 @@ const Project = () => {
       .then((res) => {
         console.log(res.data.project);
         setProject(res.data.project);
+        setFileTree(res.data.project.fileTree || {});
       });
 
     axios
@@ -424,7 +425,7 @@ const Project = () => {
         )}
       </section>
 
-      <section className="right  bg-red-50 flex-grow h-full flex">
+      <section className="right bg-red-50 flex-grow h-full min-h-0 flex">
         <div className="explorer h-full max-w-64 min-w-52 bg-slate-500">
           <div className="file-tree w-full">
             <p className="flex items-center gap-2 border-b border-slate-400 bg-slate-600 px-3 py-2 text-sm font-semibold tracking-wide text-slate-100 shadow-sm">
@@ -449,7 +450,7 @@ const Project = () => {
           </div>
         </div>
         
-          <div className="code-editor flex flex-col flex-grow h-full">
+          <div className="code-editor flex flex-col flex-grow h-full min-h-0">
             <div className="top flex justify-between w-full">
 
               <div className="files flex">
@@ -499,7 +500,7 @@ const Project = () => {
 
                     })
                 }}
-                  className="px-2 bg-slate-300 text-white"
+                  className="px-2 bg-slate-800 text-white"
                 >
                   run 
                 </button>
@@ -507,28 +508,25 @@ const Project = () => {
 
 
             </div>
-            <div className="bottom flex flex-grow">
+            <div className="bottom flex flex-grow min-h-0">
               {currentFile && fileTree[currentFile]?.file?.contents ? (
-                <pre className="hljs w-full h-full overflow-auto bg-slate-900">
+                <pre className="hljs w-full h-full min-h-0 overflow-auto bg-slate-900">
                   <code
                     contentEditable
                     suppressContentEditableWarning
                     className="hljs block min-h-full p-4 outline-none text-sm"
                     onBlur={(e) => {
                       const updatedContent = e.target.innerText;
-
-                      setFileTree((prev) => ({
-                        ...prev,
+                      const ft = {
+                        ...fileTree,
                         [currentFile]: {
-                          ...prev[currentFile],
                           file: {
-                            ...(prev[currentFile]?.file || {}),
-                            contents: updatedContent,
+                            contents: updatedContent, 
                           },
                         },
-                      }));
-
-                      saveFileTree(ft)
+                      };
+                      setFileTree(ft);
+                      saveFileTree(ft);
 
                     }}
                     dangerouslySetInnerHTML={{

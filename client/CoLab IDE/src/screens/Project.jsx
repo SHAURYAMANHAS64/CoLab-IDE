@@ -54,6 +54,8 @@ const Project = () => {
   const [openedFiles, setOpenedFiles] = useState([]);
 
   const [webContainer, setWebContainer] = useState(null);
+  const [iframeUrl, setIframeUrl] = useState(null);
+  const [runProcess, setRunProcess] = useState(null);
 
   const messageBoxRef = useRef(null);
 
@@ -126,6 +128,17 @@ const Project = () => {
       messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
     }
   }, [messages]);
+
+  function saveFileTree(ft){
+    axios.put('/projects/update-file-tree',{
+      projectId: project._id,
+      fileTree:ft
+    }).then(res => {
+        console.log(res.data);
+      }).catch(err => {
+        console.log(err);
+      })
+  }
 
   const send = () => {
     if (!user || !user._id) {
@@ -418,8 +431,9 @@ const Project = () => {
               <Folder className="size-4 text-slate-200" />
               File Explorer
             </p>
-            {Object.keys(fileTree).map((file, index) => (
+            {Object.keys(fileTree || {}).map((file, index) => (
               <button
+                key={file}
                 className="tree-element cursor-pointer p-2 px-2 flex items-center gap-2 bg-slate-300 w-full border-b border-slate-500 hover:bg-slate-400"
                 onClick={() => {
                   setCurrentFile(file);
@@ -434,9 +448,12 @@ const Project = () => {
             ))}
           </div>
         </div>
-        {currentFile && (
+        
           <div className="code-editor flex flex-col flex-grow h-full">
-            <div className="top">
+            <div className="top flex justify-between w-full">
+
+              <div className="files flex">
+
               {openedFiles.map((file, index) => (
                 <button
                   key={index}
@@ -446,9 +463,52 @@ const Project = () => {
                   {file}
                 </button>
               ))}
+              </div>
+
+              <div className="actions flex gap-2">
+                <button
+                  onClick={async () => {
+                    const installProcess = await webContainer.spawn("npm",[ "install" ])
+
+                    await webContainer.mount(fileTree)
+                      installProcess.output.pipeTo(new WritableStream({
+
+                        
+                        write(chunk) {
+                          console.log(chunk)
+                        }
+                      })) 
+
+                      if(runProcess) {
+                        runProcess.kill()
+                      }
+
+                    let tempRunProcess = await webContainer.spawn("npm",[ "start" ])
+
+                    tempRunProcess.output.pipeTo(new WritableStream({
+                      write(chunk) {
+                        console.log(chunk)
+                      }
+                    }))
+
+                    setRunProcess(tempRunProcess)
+
+                    webContainer.on('server-ready', (port,url) => {
+                      console.log(port,url)
+                      setIframeUrl(url)
+
+                    })
+                }}
+                  className="px-2 bg-slate-300 text-white"
+                >
+                  run 
+                </button>
+              </div>
+
+
             </div>
             <div className="bottom flex flex-grow">
-              {fileTree[currentFile] && (
+              {currentFile && fileTree[currentFile]?.file?.contents ? (
                 <pre className="hljs w-full h-full overflow-auto bg-slate-900">
                   <code
                     contentEditable
@@ -460,15 +520,20 @@ const Project = () => {
                       setFileTree((prev) => ({
                         ...prev,
                         [currentFile]: {
+                          ...prev[currentFile],
                           file: {
+                            ...(prev[currentFile]?.file || {}),
                             contents: updatedContent,
                           },
                         },
                       }));
+
+                      saveFileTree(ft)
+
                     }}
                     dangerouslySetInnerHTML={{
                       __html: hljs.highlight(
-                        fileTree[currentFile].file.contents,
+                        fileTree[currentFile]?.file?.contents || "",
                         { language: "javascript" },
                       ).value,
                     }}
@@ -477,10 +542,25 @@ const Project = () => {
                     }}
                   />
                 </pre>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-900 text-slate-400">
+                  <p>Select a file to edit</p>
+                </div>
               )}
             </div>
           </div>
-        )}
+
+          {iframeUrl && webContainer && 
+          (<div className="flex min-w-96 flex-col h-full">
+            <div className="adress-bar">
+              <input type="text" 
+              onChange={(e) => setIframeUrl(e.target.value)}
+              value={iframeUrl} className="w-full p-2 bg-slate-200 text-sm" />
+            </div>
+          <iframe src={iframeUrl} className="w-full h-full" ></iframe>
+          </div>)
+          }
+
       </section>
     </main>
   );

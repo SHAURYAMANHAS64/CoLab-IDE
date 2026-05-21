@@ -213,19 +213,19 @@ const Project = () => {
   }, [selectedUsers]);
 
   return (
-    <main className="h-screen w-screen flex">
-      <section className="left relative flex flex-col h-screen min-w-96 bg-slate-300">
-        <header className="flex justify-between items-center p-4 w-full bg-blue-200 border-b border-gray-400 absolute top-0">
+    <main className="h-screen w-screen flex bg-[#0b0c0f] text-slate-100">
+      <section className="left relative flex flex-col h-screen min-w-[22rem] bg-[#0f1115] border-r border-white/10">
+        <header className="flex justify-between items-center px-4 py-3 w-full bg-[#11141a]/90 backdrop-blur border-b border-white/10 absolute top-0">
           <button
             onClick={() => setIsUserModalOpen(true)}
-            className="flex gap-2 items-center p-2"
+            className="flex gap-2 items-center rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
           >
             <UserRoundPlus size={16} />
             <p className="">Add collaborator</p>
           </button>
           <button
             onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)}
-            className="p-2  text-black rounded"
+            className="rounded-md p-2 text-slate-200 hover:bg-white/5"
           >
             <UsersRound size={20} strokeWidth={2.5} />
           </button>
@@ -235,7 +235,7 @@ const Project = () => {
           <div className="flex flex-col flex-grow w-full min-h-0">
             <div
               ref={messageBoxRef}
-              className="message-box p-2 flex-grow flex flex-col gap-1 overflow-y-auto scrollbar-hide"
+              className="message-box px-3 py-4 flex-grow flex flex-col gap-3 overflow-y-auto scrollbar-hide"
             >
               {messages.map((messageObject, index) => {
                 const senderLabel = getSenderLabel(messageObject);
@@ -245,14 +245,16 @@ const Project = () => {
                 return (
                   <div
                     key={`${messageObject.sender || "msg"}-${index}`}
-                    className={`message max-w-96 flex flex-col p-2 bg-slate-50 w-fit rounded-md ${
-                      isOwn ? "ml-auto" : ""
+                    className={`message max-w-96 flex w-fit flex-col rounded-lg border border-white/5 bg-[#151923] p-3 shadow-sm ${
+                      isOwn ? "ml-auto border-amber-400/30 bg-[#1a1f2b]" : ""
                     }`}
                     gre
                   >
-                    <small className="opacity-65 text-xsl">{senderLabel}</small>
+                    <small className="text-[11px] uppercase tracking-wide text-slate-400">
+                      {senderLabel}
+                    </small>
                     {isAi ? (
-                      <div className="text-sm overflow-auto bg-slate-900 text-white  p-2 rounded">
+                      <div className="text-sm overflow-auto rounded-md border border-amber-400/20 bg-[#0b0f17] text-slate-100 p-2">
                         <Markdown
                           options={{
                             overrides: {
@@ -272,17 +274,23 @@ const Project = () => {
             </div>
           </div>
 
-          <div className="inputField w-full flex p-2 bg-slate-100">
+          <div className="inputField w-full flex items-center gap-2 border-t border-white/10 bg-[#0f1115] p-3">
             <input
-              className="flex-grow p-2 px-4 border rounded outline-none"
+              className="flex-grow rounded-md border border-white/10 bg-[#0b0d12] px-4 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-amber-400/40 focus:ring-2 focus:ring-amber-400/20"
               type="text"
               placeholder="Enter message"
               value={message}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  send();
+                }
+              }}
               onChange={(e) => setMessage(e.target.value)}
             />
             <button
               onClick={send}
-              className="ml-2 px-4 bg-black text-white rounded"
+              className="rounded-md bg-amber-400 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-300"
             >
               <Send />
             </button>
@@ -290,30 +298,32 @@ const Project = () => {
         </div>
 
         <div
-          className={`sidePanel w-full h-full flex flex-col gap-2 bg-slate-50 absolute transition-all ${isSidePanelOpen ? "translate-x-0" : "-translate-x-full"} top-0`}
+          className={`sidePanel w-full h-full flex flex-col gap-2 bg-[#11141a] absolute transition-all ${isSidePanelOpen ? "translate-x-0" : "-translate-x-full"} top-0`}
         >
-          <header className="flex justify-between items-center p-2 px-3 bg-slate-200">
-            <h1 className="font-semibold text-lg">Collaborators</h1>
+          <header className="flex justify-between items-center p-3 bg-[#141923] border-b border-white/10">
+            <h1 className="font-semibold text-lg text-slate-100">Collaborators</h1>
             <button
               onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)}
-              className="p-2"
+              className="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-white/5"
             >
               close
             </button>
           </header>
 
-          <div className="users flex flex-col gap-2 p-2">
+          <div className="users flex flex-col gap-2 p-3">
             {project.users &&
               project.users.map((user, index) => {
                 return (
                   <div
                     key={user._id || user.id || index}
-                    className="user cursor-pointer hover:bg-slate-200 rounded transition flex gap-2 p-2 w-full"
+                    className="user cursor-pointer rounded-md border border-white/5 bg-[#0f131b] transition hover:bg-white/5 flex gap-2 p-2 w-full"
                   >
-                    <div className="aspect-square rounded-full w-fit h-fit flex items-center p-2 text-white bg-slate-600">
+                    <div className="aspect-square rounded-full w-fit h-fit flex items-center p-2 text-slate-100 bg-[#1b2230]">
                       <UserRound />
                     </div>
-                    <h1 className="font-semibold text-lg">{user.email}</h1>
+                    <h1 className="font-semibold text-sm text-slate-100">
+                      {user.email}
+                    </h1>
                   </div>
                 );
               })}
@@ -425,17 +435,17 @@ const Project = () => {
         )}
       </section>
 
-      <section className="right bg-red-50 flex-grow h-full min-h-0 flex">
-        <div className="explorer h-full max-w-64 min-w-52 bg-slate-500">
+      <section className="right flex-grow h-full min-h-0 flex bg-[#0b0c0f]">
+        <div className="explorer h-full max-w-64 min-w-52 bg-[#0f1218] border-r border-white/10">
           <div className="file-tree w-full">
-            <p className="flex items-center gap-2 border-b border-slate-400 bg-slate-600 px-3 py-2 text-sm font-semibold tracking-wide text-slate-100 shadow-sm">
-              <Folder className="size-4 text-slate-200" />
+            <p className="flex items-center gap-2 border-b border-white/10 bg-[#141923] px-3 py-2 text-sm font-semibold tracking-wide text-slate-200">
+              <Folder className="size-4 text-amber-300" />
               File Explorer
             </p>
             {Object.keys(fileTree || {}).map((file, index) => (
               <button
                 key={file}
-                className="tree-element cursor-pointer p-2 px-2 flex items-center gap-2 bg-slate-300 w-full border-b border-slate-500 hover:bg-slate-400"
+                className="tree-element cursor-pointer px-3 py-2 flex items-center gap-2 w-full border-b border-white/5 text-slate-200 hover:bg-white/5"
                 onClick={() => {
                   setCurrentFile(file);
                   setOpenedFiles((prev) =>
@@ -443,15 +453,15 @@ const Project = () => {
                   );
                 }}
               >
-                <File className="size-4 " />
-                <p className="font-semibold text-md ">{file}</p>
+                <File className="size-4 text-slate-300" />
+                <p className="font-medium text-sm text-slate-200">{file}</p>
               </button>
             ))}
           </div>
         </div>
         
           <div className="code-editor flex flex-col flex-grow h-full min-h-0">
-            <div className="top flex justify-between w-full">
+            <div className="top flex justify-between w-full border-b border-white/10 bg-[#11141a]">
 
               <div className="files flex">
 
@@ -459,7 +469,7 @@ const Project = () => {
                 <button
                   key={index}
                   onClick={() => setCurrentFile(file)}
-                  className={`file-tab px-4 py-2  border-b ${currentFile === file ? "border-slate-900 bg-slate-200" : "border-transparent"}`}
+                  className={`file-tab px-4 py-2 text-sm font-medium border-b ${currentFile === file ? "border-amber-400/60 text-amber-200 bg-white/5" : "border-transparent text-slate-300 hover:text-slate-100"}`}
                 >
                   {file}
                 </button>
@@ -500,7 +510,7 @@ const Project = () => {
 
                     })
                 }}
-                  className="px-2 bg-slate-800 text-white"
+                  className="rounded-md bg-amber-400 px-3 py-1.5 text-sm font-semibold text-black hover:bg-amber-300"
                 >
                   run 
                 </button>
@@ -508,9 +518,9 @@ const Project = () => {
 
 
             </div>
-            <div className="bottom flex flex-grow min-h-0">
+            <div className="bottom flex flex-grow min-h-0 bg-[#0b0f17]">
               {currentFile && fileTree[currentFile]?.file?.contents ? (
-                <pre className="hljs w-full h-full min-h-0 overflow-auto bg-slate-900">
+                <pre className="hljs w-full h-full min-h-0 overflow-auto bg-[#0b0f17]">
                   <code
                     contentEditable
                     suppressContentEditableWarning
@@ -541,7 +551,7 @@ const Project = () => {
                   />
                 </pre>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-900 text-slate-400">
+                <div className="w-full h-full flex items-center justify-center bg-[#0b0f17] text-slate-400">
                   <p>Select a file to edit</p>
                 </div>
               )}
@@ -549,11 +559,11 @@ const Project = () => {
           </div>
 
           {iframeUrl && webContainer && 
-          (<div className="flex min-w-96 flex-col h-full">
-            <div className="adress-bar">
+          (<div className="flex min-w-96 flex-col h-full border-l border-white/10 bg-[#0f1218]">
+            <div className="adress-bar border-b border-white/10">
               <input type="text" 
               onChange={(e) => setIframeUrl(e.target.value)}
-              value={iframeUrl} className="w-full p-2 bg-slate-200 text-sm" />
+              value={iframeUrl} className="w-full bg-[#0b0d12] p-2 text-sm text-slate-200 outline-none" />
             </div>
           <iframe src={iframeUrl} className="w-full h-full" ></iframe>
           </div>)

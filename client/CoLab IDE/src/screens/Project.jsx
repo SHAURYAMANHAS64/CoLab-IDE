@@ -174,12 +174,24 @@ const Project = () => {
     }
 
     recieveMessage("project-message", (data) => {
-      const message = JSON.parse(data.message);
-      console.log("Received message:", message);
-      webContainer?.mount(message.fileTree);
-      if (message.fileTree) {
-        setFileTree(message.fileTree);
+      let parsedMessage = null;
+
+      if (typeof data.message === "string") {
+        try {
+          parsedMessage = JSON.parse(data.message);
+        } catch (error) {
+          parsedMessage = null;
+        }
+      } else if (data.message && typeof data.message === "object") {
+        parsedMessage = data.message;
       }
+
+      console.log("Received message:", parsedMessage ?? data.message);
+      if (parsedMessage?.fileTree) {
+        webContainer?.mount(parsedMessage.fileTree);
+        setFileTree(parsedMessage.fileTree);
+      }
+
       setMessages((prev) => [...prev, data]);
     });
 

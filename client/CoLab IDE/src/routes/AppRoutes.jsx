@@ -4,7 +4,7 @@ import Login from "../screens/login";
 import Register from "../screens/register";
 import Home from "../screens/Home";
 import LandingPage from "../screens/LandingPage";
-import Project from "../screens/project";
+import Project from "../screens/Project";
 import UserAuth from "../auth/UserAuth";
 
 const AppRoutes = () => {

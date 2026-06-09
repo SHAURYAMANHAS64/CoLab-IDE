@@ -313,7 +313,9 @@ const Project = () => {
           className={`sidePanel w-full h-full flex flex-col gap-2 bg-[#11141a] absolute transition-all ${isSidePanelOpen ? "translate-x-0" : "-translate-x-full"} top-0`}
         >
           <header className="flex justify-between items-center p-3 bg-[#141923] border-b border-white/10">
-            <h1 className="font-semibold text-lg text-slate-100">Collaborators</h1>
+            <h1 className="font-semibold text-lg text-slate-100">
+              Collaborators
+            </h1>
             <button
               onClick={() => setIsSlidePanelOpen(!isSidePanelOpen)}
               className="rounded-md px-2 py-1 text-sm text-slate-300 hover:bg-white/5"
@@ -471,12 +473,10 @@ const Project = () => {
             ))}
           </div>
         </div>
-        
-          <div className="code-editor flex flex-col flex-grow h-full min-h-0">
-            <div className="top flex justify-between w-full border-b border-white/10 bg-[#11141a]">
 
-              <div className="files flex">
-
+        <div className="code-editor flex flex-col flex-grow h-full min-h-0">
+          <div className="top flex justify-between w-full border-b border-white/10 bg-[#11141a]">
+            <div className="files flex">
               {openedFiles.map((file, index) => (
                 <button
                   key={index}
@@ -486,101 +486,110 @@ const Project = () => {
                   {file}
                 </button>
               ))}
-              </div>
-
-              <div className="actions flex gap-2">
-                <button
-                  onClick={async () => {
-                    const installProcess = await webContainer.spawn("npm",[ "install" ])
-
-                    await webContainer.mount(fileTree)
-                      installProcess.output.pipeTo(new WritableStream({
-
-                        
-                        write(chunk) {
-                          console.log(chunk)
-                        }
-                      })) 
-
-                      if(runProcess) {
-                        runProcess.kill()
-                      }
-
-                    let tempRunProcess = await webContainer.spawn("npm",[ "start" ])
-
-                    tempRunProcess.output.pipeTo(new WritableStream({
-                      write(chunk) {
-                        console.log(chunk)
-                      }
-                    }))
-
-                    setRunProcess(tempRunProcess)
-
-                    webContainer.on('server-ready', (port,url) => {
-                      console.log(port,url)
-                      setIframeUrl(url)
-
-                    })
-                }}
-                  className="rounded-md bg-amber-400 px-3 py-1.5 text-sm font-semibold text-black hover:bg-amber-300"
-                >
-                  run 
-                </button>
-              </div>
-
-
             </div>
-            <div className="bottom flex flex-grow min-h-0 bg-[#0b0f17]">
-              {currentFile && fileTree[currentFile]?.file?.contents ? (
-                <pre className="hljs w-full h-full min-h-0 overflow-auto bg-[#0b0f17]">
-                  <code
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="hljs block min-h-full p-4 outline-none text-sm"
-                    onBlur={(e) => {
-                      const updatedContent = e.target.innerText;
-                      const ft = {
-                        ...fileTree,
-                        [currentFile]: {
-                          file: {
-                            contents: updatedContent, 
-                          },
-                        },
-                      };
-                      setFileTree(ft);
-                      saveFileTree(ft);
 
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: hljs.highlight(
-                        fileTree[currentFile]?.file?.contents || "",
-                        { language: "javascript" },
-                      ).value,
-                    }}
-                    style={{
-                      whiteSpace: "pre-wrap",
-                    }}
-                  />
-                </pre>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#0b0f17] text-slate-400">
-                  <p>Select a file to edit</p>
-                </div>
-              )}
+            <div className="actions flex gap-2">
+              <button
+                onClick={async () => {
+                  if (!webContainer) {
+                    console.log("WebContainer not initialized");
+                    return;
+                  }
+
+                  await webContainer.mount(fileTree);
+
+                  const installProcess = await webContainer.spawn("npm", [
+                    "install",
+                  ]);
+
+                  installProcess.output.pipeTo(
+                    new WritableStream({
+                      write(chunk) {
+                        console.log(chunk);
+                      },
+                    }),
+                  );
+
+                  if (runProcess) {
+                    runProcess.kill();
+                  }
+
+                  const tempRunProcess = await webContainer.spawn("npm", [
+                    "start",
+                  ]);
+
+                  tempRunProcess.output.pipeTo(
+                    new WritableStream({
+                      write(chunk) {
+                        console.log(chunk);
+                      },
+                    }),
+                  );
+
+                  setRunProcess(tempRunProcess);
+
+                  webContainer.on("server-ready", (port, url) => {
+                    setIframeUrl(url);
+                  });
+                }}
+                className="rounded-md bg-amber-400 px-3 py-1.5 text-sm font-semibold text-black hover:bg-amber-300"
+              >
+                run
+              </button>
             </div>
           </div>
+          <div className="bottom flex flex-grow min-h-0 bg-[#0b0f17]">
+            {currentFile && fileTree[currentFile]?.file?.contents ? (
+              <pre className="hljs w-full h-full min-h-0 overflow-auto bg-[#0b0f17]">
+                <code
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="hljs block min-h-full p-4 outline-none text-sm"
+                  onBlur={(e) => {
+                    const updatedContent = e.target.innerText;
+                    const ft = {
+                      ...fileTree,
+                      [currentFile]: {
+                        file: {
+                          contents: updatedContent,
+                        },
+                      },
+                    };
+                    setFileTree(ft);
+                    saveFileTree(ft);
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: hljs.highlight(
+                      fileTree[currentFile]?.file?.contents || "",
+                      { language: "javascript" },
+                    ).value,
+                  }}
+                  style={{
+                    whiteSpace: "pre-wrap",
+                  }}
+                />
+              </pre>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[#0b0f17] text-slate-400">
+                <p>Select a file to edit</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-          {iframeUrl && webContainer && 
-          (<div className="flex min-w-96 flex-col h-full border-l border-white/10 bg-[#0f1218]">
+        {iframeUrl && webContainer && (
+          <div className="flex min-w-96 flex-col h-full border-l border-white/10 bg-[#0f1218]">
             <div className="adress-bar border-b border-white/10">
-              <input type="text" 
-              onChange={(e) => setIframeUrl(e.target.value)}
-              value={iframeUrl} className="w-full bg-[#0b0d12] p-2 text-sm text-slate-200 outline-none" />
+              <input
+                type="text"
+                onChange={(e) => setIframeUrl(e.target.value)}
+                value={iframeUrl}
+                className="w-full bg-[#0b0d12] p-2 text-sm text-slate-200 outline-none"
+              />
             </div>
-          <iframe src={iframeUrl} className="w-full h-full" ></iframe>
-          </div>)
-          }
-
+            <iframe src={iframeUrl} className="w-full h-full"></iframe>
+          </div>
+        )}
       </section>
     </main>
   );

@@ -587,7 +587,9 @@ const Project = () => {
                 className="w-full bg-[#0b0d12] p-2 text-sm text-slate-200 outline-none"
               />
             </div>
-            <iframe src={iframeUrl} className="w-full h-full"></iframe>
+            <iframe src={iframeUrl}
+  title="preview"
+  allow="cross-origin-isolated" className="w-full h-full"></iframe>
           </div>
         )}
       </section>
